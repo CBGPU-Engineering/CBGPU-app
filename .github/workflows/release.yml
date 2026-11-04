@@ -1,0 +1,89 @@
+name: Signed Android release
+on:
+  push:
+    tags: ['v*.*.*']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    environment: android-release
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Check signing availability
+        id: signing
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASS: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          EXPECTED_CERT_SHA256: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
+        run: |
+          if [[ -n "$KEYSTORE" && -n "$STORE_PASS" && -n "$KEY_PASS" && -n "$KEY_ALIAS" && -n "$EXPECTED_CERT_SHA256" ]]; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo 'Signed release skipped: configure Android signing secrets. No debug-signed APK will be published.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        if: steps.signing.outputs.ready == 'true'
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        if: steps.signing.outputs.ready == 'true'
+        with:
+          flutter-version: 3.47.8
+          channel: stable
+      - name: Build signed APK
+        if: steps.signing.outputs.ready == 'true'
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASS: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          EXPECTED_CERT_SHA256: ${{ vars.ANDROID_SIGNING_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          git merge-base --is-ancestor HEAD origin/main
+          cd .
+          test "$(sed -n 's/^version: \([^+]*\).*/\1/p' pubspec.yaml)" = "${GITHUB_REF_NAME#v}"
+          umask 077
+          printf '%s' "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/cbgpu-release.jks"
+          printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$RUNNER_TEMP/cbgpu-release.jks" "$STORE_PASS" "$KEY_ALIAS" "$KEY_PASS" > android/key.properties
+          flutter pub get
+          flutter test test/app_navigation_test.dart test/eduset_login_policy_test.dart
+          flutter build apk --release
+          signer_bin=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
+          test -n "$signer_bin"
+          "$signer_bin" verify --print-certs build/app/outputs/flutter-apk/app-release.apk | grep -Fi "$EXPECTED_CERT_SHA256"
+          mkdir -p release-artifacts
+          cp build/app/outputs/flutter-apk/app-release.apk release-artifacts/cbgpu.apk
+          cd .
+          node scripts/checksums.mjs release-artifacts
+      - name: Publish signed Android assets
+        if: steps.signing.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" --verify-tag --latest=false --title "CBGPU Android ${GITHUB_REF_NAME#v}" --notes 'Signed Android release. See CHANGELOG.md and README.md for verification scope.'
+          fi
+          gh release upload "$GITHUB_REF_NAME" release-artifacts/* --clobber
+      - name: Clean signing material
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          Path(os.environ['RUNNER_TEMP'], 'cbgpu-release.jks').unlink(missing_ok=True)
+          Path('android/key.properties').unlink(missing_ok=True)
+          PY
