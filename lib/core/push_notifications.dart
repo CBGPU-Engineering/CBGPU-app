@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../firebase_options.dart';
 import 'alarm_service.dart';
+import 'home_widgets.dart' show pendingWidgetPath;
 
 /// FCM on both Android and iOS (Web has no native shell to register a
 /// device token for — see [WebViewShellScreen], the whole app is a WebView
@@ -64,6 +65,12 @@ Future<void> registerDeviceForPushNotifications() async {
         ),
       );
     });
+    // 알림을 눌러 앱이 열릴 때 서버가 data.url로 보낸 화면으로 이동한다.
+    _openedSubscription ??= FirebaseMessaging.onMessageOpenedApp.listen(
+      _openPushTarget,
+    );
+    final initial = await messaging.getInitialMessage();
+    if (initial != null) _openPushTarget(initial);
     final token = await messaging.getToken();
     if (token != null) {
       await _upsertToken(token);
@@ -83,6 +90,24 @@ Future<void> registerDeviceForPushNotifications() async {
   }
 }
 
+/// data.url은 우리 도메인의 https 주소만 허용한다(알림 내용이 임의 사이트를 열지 못하게).
+const _pushAllowedHosts = {'app.cbgpu.com', 'admin.cbgpu.com'};
+
+void _openPushTarget(RemoteMessage message) {
+  final raw = message.data['url'];
+  if (raw is! String) return;
+  final uri = Uri.tryParse(raw);
+  if (uri == null ||
+      uri.scheme != 'https' ||
+      uri.hasPort ||
+      uri.userInfo.isNotEmpty ||
+      !_pushAllowedHosts.contains(uri.host)) {
+    return;
+  }
+  pendingWidgetPath.value = uri.toString();
+}
+
+StreamSubscription<RemoteMessage>? _openedSubscription;
 StreamSubscription<String>? _tokenRefreshSubscription;
 StreamSubscription<RemoteMessage>? _foregroundSubscription;
 
