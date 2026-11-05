@@ -15,6 +15,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 import 'alarm_service.dart';
+import 'app_info.dart';
 import 'eduset_login_screen.dart';
 import 'home_widgets.dart';
 import 'push_notifications.dart';
@@ -63,6 +64,7 @@ final _bridgeScript =
   }
   window.CBGPUNative = {
     isNative: true,
+    getAppInfo: function () { return call('getAppInfo', {}); },
     platform: '${defaultTargetPlatform.name}',
     scheduleAlarm: function (opts) { return call('scheduleAlarm', opts); },
     cancelAlarm: function (id) { return call('cancelAlarm', { id: id }); },
@@ -305,6 +307,8 @@ class _WebViewShellScreenState extends State<WebViewShellScreen>
 
   Future<dynamic> _dispatch(String action, Map<String, dynamic> payload) async {
     switch (action) {
+      case 'getAppInfo':
+        return installedAppInfo();
       case 'scheduleAlarm':
         final whenIso = payload['whenIso'] as String?;
         final id = payload['id'] as String?;

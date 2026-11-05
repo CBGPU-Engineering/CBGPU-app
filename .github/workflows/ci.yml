@@ -21,4 +21,4 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
-      - run: flutter test test/app_navigation_test.dart test/eduset_login_policy_test.dart
+      - run: flutter test test/app_info_test.dart test/app_navigation_test.dart test/eduset_login_policy_test.dart

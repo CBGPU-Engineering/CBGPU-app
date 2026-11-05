@@ -60,7 +60,7 @@ jobs:
           printf '%s' "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/cbgpu-release.jks"
           printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$RUNNER_TEMP/cbgpu-release.jks" "$STORE_PASS" "$KEY_ALIAS" "$KEY_PASS" > android/key.properties
           flutter pub get
-          flutter test test/app_navigation_test.dart test/eduset_login_policy_test.dart
+          flutter test test/app_info_test.dart test/app_navigation_test.dart test/eduset_login_policy_test.dart
           flutter build apk --release
           signer_bin=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
           test -n "$signer_bin"

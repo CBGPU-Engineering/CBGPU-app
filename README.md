@@ -38,3 +38,25 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [migration notes](docs/MIGRATION.md).
 ## License
 
 Original code is [Apache-2.0](LICENSE); dependencies retain their own licenses.
+
+### In-app Android updates
+
+The trusted `app.cbgpu.com` WebView bridge exposes the installed package version
+from Android's package manager. The website checks `/api/app-release` at startup,
+on return to the foreground, and every 30 minutes while visible. It offers an
+optional update only for a newer Android build; dismissing it snoozes that build
+for 24 hours. Shipped apps before 1.0.8 lack version reporting and receive the
+upgrade notice once a build >=9 is published. Browser users are never prompted.
+
+After building with the existing release signing key, publish on the host with:
+
+```bash
+python3 scripts/publish-android-release.py
+```
+
+This verifies package identity, source version and the existing APK certificate,
+backs up the previous APK privately, replaces the download atomically, and writes
+`android-release.json` last. The web service reads that host manifest at runtime,
+so future APK publications do not need a web rebuild. Never advertise a build
+before its verified APK is available. Android still asks the user to install the
+update; silent installation is not used.
