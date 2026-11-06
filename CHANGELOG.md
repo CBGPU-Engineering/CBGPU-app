@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.9
+
+- Open the screen carried by a push notification when it is tapped (signup and GPU request notifications open the phone admin screen).
+
 ## 1.0.8
 
 - Expose the installed Android version to the trusted app website so it can show updates only when a newer signed build is available.
