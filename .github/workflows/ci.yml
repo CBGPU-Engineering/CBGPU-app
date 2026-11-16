@@ -22,3 +22,9 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: flutter test test/native_navigation_test.dart test/app_info_test.dart test/app_navigation_test.dart test/eduset_login_policy_test.dart
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: 22
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run check
+      - run: npm run check:publication
