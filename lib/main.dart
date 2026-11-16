@@ -19,11 +19,9 @@ Future<void> main() async {
   runApp(const CbgpuApp());
 }
 
-/// The app is a thin native shell around the deployed web app: real UI lives
-/// at cbgpu.com inside a WebView, and this shell's only job is the
-/// alarm "connector" the web page can't do on its own — see
-/// core/webview_shell.dart for the JS bridge and core/alarm_service.dart for
-/// the local notification scheduling it drives.
+/// Hybrid app: shared web feature screens retain the website design while
+/// native Flutter controls own acknowledged workspace navigation, haptics,
+/// system back behavior, file actions, notifications and session persistence.
 class CbgpuApp extends StatelessWidget {
   const CbgpuApp({super.key});
 

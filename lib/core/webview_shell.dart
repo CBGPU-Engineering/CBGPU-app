@@ -15,6 +15,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 import 'alarm_service.dart';
+import 'native_navigation.dart';
 import 'app_info.dart';
 import 'eduset_login_screen.dart';
 import 'home_widgets.dart';
@@ -64,6 +65,7 @@ final _bridgeScript =
   }
   window.CBGPUNative = {
     isNative: true,
+    setNavigation: function (opts) { return call('setNavigation', opts); },
     getAppInfo: function () { return call('getAppInfo', {}); },
     platform: '${defaultTargetPlatform.name}',
     scheduleAlarm: function (opts) { return call('scheduleAlarm', opts); },
@@ -115,6 +117,7 @@ class _WebViewShellScreenState extends State<WebViewShellScreen>
   String _currentUrl = _siteUrl;
   bool _bridgeAllowed = false;
   bool _schoolLoginPending = false;
+  NativeNavigationState? _nativeNavigation;
 
   @override
   void initState() {
@@ -147,6 +150,7 @@ class _WebViewShellScreenState extends State<WebViewShellScreen>
             if (!mounted) return;
             _bridgeAllowed = isNativeBridgeOrigin(Uri.parse(url));
             setState(() {
+              _nativeNavigation = null;
               _loading = true;
               _hasLoadError = false;
               _currentUrl = url;
@@ -307,6 +311,10 @@ class _WebViewShellScreenState extends State<WebViewShellScreen>
 
   Future<dynamic> _dispatch(String action, Map<String, dynamic> payload) async {
     switch (action) {
+      case 'setNavigation':
+        final navigation = NativeNavigationState.fromMessage(payload);
+        if (mounted) setState(() => _nativeNavigation = navigation);
+        return {'ok': true};
       case 'getAppInfo':
         return installedAppInfo();
       case 'scheduleAlarm':
@@ -467,6 +475,26 @@ class _WebViewShellScreenState extends State<WebViewShellScreen>
     }
   }
 
+  Future<void> _selectNativeTab(int index) async {
+    final state = _nativeNavigation;
+    if (state == null || index == state.selected) return;
+    final tab = state.tabs[index];
+    if (!validNativeTabPath(tab.path)) return;
+    final current = Uri.tryParse(await _controller.currentUrl() ?? '');
+    if (current == null || !isNativeBridgeOrigin(current)) return;
+    if (mounted) setState(() => _nativeNavigation = state.select(index));
+    unawaited(HapticFeedback.selectionClick());
+    try {
+      final handled = await _controller.runJavaScriptReturningResult(
+        "typeof window.__cbgpuNativeNavigate === 'function' ? (window.__cbgpuNativeNavigate(${jsonEncode(tab.path)}), true) : false",
+      );
+      if (handled == true || handled == 'true') return;
+    } catch (_) {}
+    await _controller.loadRequest(
+      _withNativeFlag(Uri.parse(_siteUrl).resolve(tab.path)),
+    );
+  }
+
   Future<void> _openExternally() async {
     await launchUrl(Uri.parse(_siteUrl), mode: LaunchMode.externalApplication);
   }
@@ -508,6 +536,14 @@ class _WebViewShellScreenState extends State<WebViewShellScreen>
         }
       },
       child: Scaffold(
+        bottomNavigationBar:
+            _nativeNavigation != null &&
+                MediaQuery.viewInsetsOf(context).bottom == 0
+            ? NativeWorkspaceNavigation(
+                state: _nativeNavigation!,
+                onSelected: (index) => unawaited(_selectNativeTab(index)),
+              )
+            : null,
         body: SafeArea(
           child: Stack(
             children: [

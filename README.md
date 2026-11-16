@@ -60,3 +60,15 @@ backs up the previous APK privately, replaces the download atomically, and write
 so future APK publications do not need a web rebuild. Never advertise a build
 before its verified APK is available. Android still asks the user to install the
 update; silent installation is not used.
+
+## Hybrid navigation
+
+Android 1.0.10 adds Flutter-rendered workspace tabs without replacing the shared
+feature screens. The website supplies the existing tab labels, SVG geometry,
+active selection and resolved theme colors; Pretendard is bundled locally.
+The app acknowledges the capability before the website hides its own bar, so
+older APKs and ordinary browsers retain their existing navigation. Tabs use
+client-side routing when available, keep the current WebView/session alive and
+provide native touch feedback. The bar hides for web dialogs, the keyboard,
+authentication pages and the full-screen AI view. This is the first hybrid step,
+not a claim that home, timetable or study screens are already native Flutter.
