@@ -114,6 +114,13 @@ object NativeCookieSession {
         }
     }
 
+    fun signedOut(): Boolean =
+        try {
+            cookies(CookieManager.getInstance())[STATE] == "signed-out"
+        } catch (_: Exception) {
+            false
+        }
+
     fun currentOwner(): String? =
         try {
             val all = cookies(CookieManager.getInstance())

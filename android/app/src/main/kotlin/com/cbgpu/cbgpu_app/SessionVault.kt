@@ -177,6 +177,26 @@ class SessionVault(private val context: Context) {
     fun session(): JSONObject? =
         synchronized(lock) {
             val current = read() ?: return@synchronized null
+            if (NativeCookieSession.signedOut()) return@synchronized null
+            val shared = NativeCookieSession.currentOwner()
+            val currentId = current.optJSONObject("user")?.optString("id")
+            if (shared != null && shared != currentId) return@synchronized null
+            if (!prefs.contains("session")) {
+                try {
+                    val user =
+                        JSONObject(
+                            NativeHttp.json(
+                                NativeHttp.BASE + "/auth/v1/user",
+                                token = current.optString("access_token"),
+                            ),
+                        )
+                    require(user.optString("id") == currentId)
+                    current.put("user", user)
+                    write(current)
+                } catch (_: Exception) {
+                    /* Expired legacy access falls through to the verified refresh below. */
+                }
+            }
             val access = current.optString("access_token")
             val exp =
                 try {
@@ -288,6 +308,9 @@ class SessionVault(private val context: Context) {
         synchronized(lock) {
             if (read()?.optJSONObject("user")?.optString("id") != expected)
                 return@synchronized false
+            if (NativeCookieSession.signedOut()) return@synchronized false
+            val shared = NativeCookieSession.currentOwner()
+            if (shared != null && shared != expected) return@synchronized false
             action()
             true
         }

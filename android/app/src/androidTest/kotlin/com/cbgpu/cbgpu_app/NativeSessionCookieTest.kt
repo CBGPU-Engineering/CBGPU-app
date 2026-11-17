@@ -83,4 +83,64 @@ class NativeSessionCookieTest {
             clear()
         }
     }
+
+    @Test
+    fun legacySessionMigratesToAndroidKeystoreWithoutLosingTokens() {
+        clear()
+        val c =
+            androidx.test.core.app.ApplicationProvider.getApplicationContext<
+                android.content.Context,
+            >()
+        val encrypted = c.getSharedPreferences("cbgpu_native_session", 0)
+        val legacy = c.getSharedPreferences("FlutterSharedPreferences", 0)
+        encrypted.edit().clear().commit()
+        val fixture = session("owner-crypto", "session-crypto")
+        legacy
+            .edit()
+            .putString(
+                "flutter.sb-cbgpu-auth-token",
+                JSONObject().put("currentSession", fixture).toString(),
+            )
+            .commit()
+        try {
+            val vault = SessionVault(c)
+            val read =
+                SessionVault::class.java.getDeclaredMethod("read").apply { isAccessible = true }
+            assertEquals(
+                fixture.getString("refresh_token"),
+                (read.invoke(vault) as JSONObject).getString("refresh_token"),
+            )
+            val write =
+                SessionVault::class.java.getDeclaredMethod("write", JSONObject::class.java).apply {
+                    isAccessible = true
+                }
+            write.invoke(vault, fixture)
+            assertFalse(
+                encrypted.getString("session", "").orEmpty().contains("fixture-refresh-token"),
+            )
+            assertNull(legacy.getString("flutter.sb-cbgpu-auth-token", null))
+            assertEquals("owner-crypto", vault.notificationOwner())
+            assertEquals("owner-crypto", NativeCookieSession.currentOwner())
+            assertEquals(
+                fixture.getString("refresh_token"),
+                vault.session()?.getString("refresh_token"),
+            )
+        } finally {
+            encrypted.edit().clear().commit()
+            legacy.edit().remove("flutter.sb-cbgpu-auth-token").commit()
+            clear()
+        }
+    }
+
+    @Test
+    fun legacyOwnerlessNotificationNeverReachesSdkAutomaticDisplay() {
+        // No attached Context exists: entering the SDK display branch would throw.
+        NativeMessagingService()
+            .handleIntent(
+                android.content
+                    .Intent("com.google.android.c2dm.intent.RECEIVE")
+                    .putExtra("gcm.n.e", "1")
+                    .putExtra("gcm.n.title", "Legacy private title"),
+            )
+    }
 }

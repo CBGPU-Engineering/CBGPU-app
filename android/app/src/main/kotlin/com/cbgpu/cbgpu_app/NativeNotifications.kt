@@ -16,6 +16,9 @@ import org.json.JSONObject
 
 object NativeNotifications {
     fun init(c: Context) {
+        if (Build.VERSION.SDK_INT >= 29)
+            c.getSystemService(NotificationManager::class.java).setNotificationDelegate(null)
+
         if (Build.VERSION.SDK_INT >= 26) {
             val m = c.getSystemService(NotificationManager::class.java)
             m.createNotificationChannel(
@@ -271,6 +274,36 @@ class BootReceiver : BroadcastReceiver() {
 }
 
 class NativeMessagingService : FirebaseMessagingService() {
+    // Pinned Firebase Messaging 25.0.0 routes automatic notification display through
+    // this public dispatch hook. Strip that branch before calling the SDK: an old
+    // Flutter token may still receive a legacy notification until first migration.
+    override fun handleIntent(intent: Intent) {
+        if (
+            intent.action in
+                listOf(
+                    "com.google.android.c2dm.intent.RECEIVE",
+                    "com.google.firebase.messaging.RECEIVE_DIRECT_BOOT",
+                )
+        ) {
+            val extras = intent.extras ?: return
+            if (extras.getString("owner_id").isNullOrEmpty()) return
+            val owner = SessionVault(this).notificationOwner()
+            if (owner == null || NativeCookieSession.currentOwner() != owner) return
+            val data =
+                extras
+                    .keySet()
+                    .mapNotNull { key -> (extras.get(key) as? String)?.let { key to it } }
+                    .toMap()
+            if (NativePushPolicy.parse(data, owner) == null) return
+            val safe = Intent(intent)
+            for (key in extras.keySet()) if (
+                key.startsWith("gcm.n.") || key.startsWith("gcm.notification.")
+            )
+                safe.removeExtra(key)
+            super.handleIntent(safe)
+        } else super.handleIntent(intent)
+    }
+
     override fun onNewToken(token: String) {
         getSharedPreferences("cbgpu_push", 0).edit().putString("token", token).apply()
         Thread {
