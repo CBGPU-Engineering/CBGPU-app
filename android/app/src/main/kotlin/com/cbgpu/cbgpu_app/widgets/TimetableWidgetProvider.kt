@@ -8,8 +8,8 @@ import android.view.View
 import android.widget.RemoteViews
 import com.cbgpu.cbgpu_app.MainActivity
 import com.cbgpu.cbgpu_app.R
-import es.antonborri.home_widget.HomeWidgetLaunchIntent
-import es.antonborri.home_widget.HomeWidgetProvider
+import com.cbgpu.cbgpu_app.widgets.NativeWidgetLaunchIntent
+import com.cbgpu.cbgpu_app.widgets.NativeWidgetProvider
 
 /**
  * Renders today's schedule as an actual row-per-period table (period badge +
@@ -25,7 +25,7 @@ import es.antonborri.home_widget.HomeWidgetProvider
  * in that case this falls back to the plain "timetable.body" status message
  * instead, same text the pre-table rendering always used for those states.
  */
-class TimetableWidgetProvider : HomeWidgetProvider() {
+class TimetableWidgetProvider : NativeWidgetProvider() {
   override fun onUpdate(
       context: Context,
       appWidgetManager: AppWidgetManager,
@@ -65,7 +65,7 @@ class TimetableWidgetProvider : HomeWidgetProvider() {
       applyWidgetAppearance(context, views, widgetId)
 
       val uri = Uri.parse("cbgpu://open/timetable")
-      val pendingIntent = HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java, uri)
+      val pendingIntent = NativeWidgetLaunchIntent.getActivity(context, MainActivity::class.java, uri)
       views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
 
       appWidgetManager.updateAppWidget(widgetId, views)

@@ -8,8 +8,8 @@ import android.view.View
 import android.widget.RemoteViews
 import com.cbgpu.cbgpu_app.MainActivity
 import com.cbgpu.cbgpu_app.R
-import es.antonborri.home_widget.HomeWidgetLaunchIntent
-import es.antonborri.home_widget.HomeWidgetProvider
+import com.cbgpu.cbgpu_app.widgets.NativeWidgetLaunchIntent
+import com.cbgpu.cbgpu_app.widgets.NativeWidgetProvider
 
 /**
  * One mini card per printer (the same real Bambu Lab X1 Carbon photo as the
@@ -26,7 +26,7 @@ import es.antonborri.home_widget.HomeWidgetProvider
  * registered, fetch failed), in which case "printer3d.body" is shown as
  * plain status text instead.
  */
-class Printer3dWidgetProvider : HomeWidgetProvider() {
+class Printer3dWidgetProvider : NativeWidgetProvider() {
   override fun onUpdate(
       context: Context,
       appWidgetManager: AppWidgetManager,
@@ -83,7 +83,7 @@ class Printer3dWidgetProvider : HomeWidgetProvider() {
       applyWidgetAppearance(context, views, widgetId)
 
       val uri = Uri.parse("cbgpu://open/manufacturing")
-      val pendingIntent = HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java, uri)
+      val pendingIntent = NativeWidgetLaunchIntent.getActivity(context, MainActivity::class.java, uri)
       views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
 
       appWidgetManager.updateAppWidget(widgetId, views)

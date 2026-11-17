@@ -13,6 +13,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: write
+      actions: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -40,11 +41,16 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+      - name: Install native Android build dependencies
         if: steps.signing.outputs.ready == 'true'
-        with:
-          flutter-version: 3.47.8
-          channel: stable
+        run: |
+          rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android
+          sdkmanager 'platforms;android-36' 'build-tools;36.0.0' 'ndk;28.2.13676358'
+      - name: Require successful native emulator CI for this exact commit
+        if: steps.signing.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: test "$(gh run list --repo "$GITHUB_REPOSITORY" --workflow ci.yml --commit "$GITHUB_SHA" --status success --limit 10 --json conclusion,headSha --jq 'length')" -gt 0
       - name: Build signed APK
         if: steps.signing.outputs.ready == 'true'
         env:
@@ -58,18 +64,17 @@ jobs:
           [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
           git merge-base --is-ancestor HEAD origin/main
           cd .
-          test "$(sed -n 's/^version: \([^+]*\).*/\1/p' pubspec.yaml)" = "${GITHUB_REF_NAME#v}"
+          test "$(sed -n 's/^versionName=//p' android/version.properties)" = "${GITHUB_REF_NAME#v}"
           umask 077
           printf '%s' "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/cbgpu-release.jks"
           printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$RUNNER_TEMP/cbgpu-release.jks" "$STORE_PASS" "$KEY_ALIAS" "$KEY_PASS" > android/key.properties
-          flutter pub get
-          flutter test test/native_navigation_test.dart test/app_info_test.dart test/app_navigation_test.dart test/eduset_login_policy_test.dart
-          flutter build apk --release
+          cargo test --manifest-path native-core/Cargo.toml --locked
+          ./android/gradlew -p android assembleRelease
           signer_bin=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)
           test -n "$signer_bin"
-          "$signer_bin" verify --print-certs build/app/outputs/flutter-apk/app-release.apk | grep -Fi "$EXPECTED_CERT_SHA256"
+          "$signer_bin" verify --print-certs android/app/build/outputs/apk/release/app-release.apk | grep -Fi "$EXPECTED_CERT_SHA256"
           mkdir -p release-artifacts
-          cp build/app/outputs/flutter-apk/app-release.apk release-artifacts/cbgpu.apk
+          cp android/app/build/outputs/apk/release/app-release.apk release-artifacts/cbgpu.apk
           cd .
           node scripts/checksums.mts release-artifacts
       - name: Publish signed Android assets

@@ -7,8 +7,8 @@ import android.net.Uri
 import android.widget.RemoteViews
 import com.cbgpu.cbgpu_app.MainActivity
 import com.cbgpu.cbgpu_app.R
-import es.antonborri.home_widget.HomeWidgetLaunchIntent
-import es.antonborri.home_widget.HomeWidgetProvider
+import com.cbgpu.cbgpu_app.widgets.NativeWidgetLaunchIntent
+import com.cbgpu.cbgpu_app.widgets.NativeWidgetProvider
 
 /**
  * Shared rendering for every plain "glance + tap to open a screen" widget
@@ -24,7 +24,7 @@ import es.antonborri.home_widget.HomeWidgetProvider
  * that fetches all six widgets' data in one pass and calls
  * HomeWidget.updateWidget(), which is what actually invokes onUpdate here.
  */
-abstract class BaseTextWidgetProvider : HomeWidgetProvider() {
+abstract class BaseTextWidgetProvider : NativeWidgetProvider() {
   abstract val keyPrefix: String
   abstract val icon: String
   abstract val title: String
@@ -48,7 +48,7 @@ abstract class BaseTextWidgetProvider : HomeWidgetProvider() {
       applyWidgetAppearance(context, views, widgetId)
 
       val uri = Uri.parse("cbgpu://open$deepLinkPath")
-      val pendingIntent = HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java, uri)
+      val pendingIntent = NativeWidgetLaunchIntent.getActivity(context, MainActivity::class.java, uri)
       views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
 
       appWidgetManager.updateAppWidget(widgetId, views)

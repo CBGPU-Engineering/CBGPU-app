@@ -74,3 +74,8 @@ __pycache__/
 /release-artifacts/
 
 node_modules/
+
+# Standalone Android/Rust generated output.
+/android/build/
+/android/app/build/
+/native-core/target/

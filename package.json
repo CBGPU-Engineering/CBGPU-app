@@ -2,8 +2,11 @@
   "name": "@cbgpu/app-tooling",
   "private": true,
   "scripts": {
-    "check": "tsc --noEmit",
-    "check:publication": "node scripts/check-publication.mts"
+    "check": "tsc --noEmit && tsc -p tsconfig.native-ui.json",
+    "check:publication": "node scripts/check-publication.mts",
+    "build:android": "node scripts/build-android.mts",
+    "verify:android": "node scripts/publish-android-release.mts",
+    "test": "node --test test-native/*.test.mts"
   },
   "engines": {
     "node": ">=22.18"

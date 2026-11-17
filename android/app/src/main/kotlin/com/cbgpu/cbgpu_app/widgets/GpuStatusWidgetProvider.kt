@@ -8,8 +8,8 @@ import android.view.View
 import android.widget.RemoteViews
 import com.cbgpu.cbgpu_app.MainActivity
 import com.cbgpu.cbgpu_app.R
-import es.antonborri.home_widget.HomeWidgetLaunchIntent
-import es.antonborri.home_widget.HomeWidgetProvider
+import com.cbgpu.cbgpu_app.widgets.NativeWidgetLaunchIntent
+import com.cbgpu.cbgpu_app.widgets.NativeWidgetProvider
 
 /**
  * Mirrors Printer3dWidgetProvider's per-item grid, one mini card per GPU
@@ -31,7 +31,7 @@ import es.antonborri.home_widget.HomeWidgetProvider
  * itself failed, in which case "gpu_status.body" is shown as plain status
  * text instead.
  */
-class GpuStatusWidgetProvider : HomeWidgetProvider() {
+class GpuStatusWidgetProvider : NativeWidgetProvider() {
   override fun onUpdate(
       context: Context,
       appWidgetManager: AppWidgetManager,
@@ -86,7 +86,7 @@ class GpuStatusWidgetProvider : HomeWidgetProvider() {
       applyWidgetAppearance(context, views, widgetId)
 
       val uri = Uri.parse("cbgpu://open/dashboard")
-      val pendingIntent = HomeWidgetLaunchIntent.getActivity(context, MainActivity::class.java, uri)
+      val pendingIntent = NativeWidgetLaunchIntent.getActivity(context, MainActivity::class.java, uri)
       views.setOnClickPendingIntent(R.id.widget_root, pendingIntent)
 
       appWidgetManager.updateAppWidget(widgetId, views)
