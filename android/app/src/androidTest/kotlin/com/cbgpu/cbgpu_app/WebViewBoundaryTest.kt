@@ -71,8 +71,28 @@ class WebViewBoundaryTest {
         }
         assertTrue("Actual supplied symbol must be rendered", pixels > 500)
         assertEquals(0, android.graphics.Color.alpha(bitmap.getPixel(0, 0)))
-        context.openFileOutput("brand-foreground.png", android.content.Context.MODE_PRIVATE).use {
-            bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            // Public synthetic test image survives Gradle's normal APK/data uninstall cleanup.
+            val values =
+                android.content.ContentValues().apply {
+                    put(
+                        android.provider.MediaStore.Images.Media.DISPLAY_NAME,
+                        "brand-foreground.png",
+                    )
+                    put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/png")
+                    put(
+                        android.provider.MediaStore.Images.Media.RELATIVE_PATH,
+                        "Pictures/CBGPU-test",
+                    )
+                }
+            val uri =
+                context.contentResolver.insert(
+                    android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                    values,
+                )!!
+            context.contentResolver.openOutputStream(uri)!!.use {
+                assertTrue(bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it))
+            }
         }
         bitmap.recycle()
     }

@@ -58,7 +58,8 @@ jobs:
           script: |
             ./android/gradlew -p android connectedDebugAndroidTest
             mkdir -p android/app/build/reports/brand
-            adb exec-out run-as com.cbgpu.cbgpu_app cat files/brand-foreground.png > android/app/build/reports/brand/foreground.png
+            adb pull /sdcard/Pictures/CBGPU-test/brand-foreground.png android/app/build/reports/brand/foreground.png
+            python3 -c "from pathlib import Path; assert Path('android/app/build/reports/brand/foreground.png').read_bytes().startswith(bytes.fromhex('89504e470d0a1a0a'))"
       - name: Upload emulator test reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
