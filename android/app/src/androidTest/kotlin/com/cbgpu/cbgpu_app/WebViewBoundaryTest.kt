@@ -1,9 +1,14 @@
 package com.cbgpu.cbgpu_app
 
 import android.content.Intent
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.webkit.WebViewCompat
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -61,14 +66,42 @@ class WebViewBoundaryTest {
     @Test
     fun onlyTrustedMainFrameHasPrivilegedBridge() {
         scenario().use { s ->
-            s.onActivity {
-                it.web.loadDataWithBaseURL(
-                    "https://app.cbgpu.com/",
-                    "<html><body>Native bridge probe</body></html>",
-                    "text/html",
-                    "UTF-8",
-                    null,
-                )
+            s.onActivity { activity ->
+                // Actual HTTPS navigation gives Chromium a real document origin.
+                // loadDataWithBaseURL
+                // is an opaque synthetic document on some system WebViews and cannot prove the
+                // production WebMessageListener source-origin boundary.
+                val original = WebViewCompat.getWebViewClient(activity.web)
+                activity.web.webViewClient =
+                    object : WebViewClient() {
+                        override fun shouldInterceptRequest(
+                            view: WebView,
+                            request: WebResourceRequest,
+                        ): WebResourceResponse? {
+                            if (request.isForMainFrame && request.url.path == "/__native_test__")
+                                return WebResourceResponse(
+                                    "text/html",
+                                    "UTF-8",
+                                    "<html><body>Bridge fixture</body></html>".byteInputStream(),
+                                )
+                            return original.shouldInterceptRequest(view, request)
+                        }
+
+                        override fun onPageStarted(
+                            view: WebView,
+                            url: String,
+                            icon: android.graphics.Bitmap?,
+                        ) = original.onPageStarted(view, url, icon)
+
+                        override fun onPageFinished(view: WebView, url: String) =
+                            original.onPageFinished(view, url)
+
+                        override fun shouldOverrideUrlLoading(
+                            view: WebView,
+                            request: WebResourceRequest,
+                        ) = original.shouldOverrideUrlLoading(view, request)
+                    }
+                activity.web.loadUrl("https://app.cbgpu.com/__native_test__")
             }
             await(s, "typeof window.CBGPUNative", "\"object\"")
             evaluate(
@@ -82,15 +115,7 @@ class WebViewBoundaryTest {
             )
             Thread.sleep(500)
             assertEquals("0", evaluate(s, "window.childReplies"))
-            s.onActivity {
-                it.web.loadDataWithBaseURL(
-                    "https://tenant.front.cbgpu.com/",
-                    "<html><body>Untrusted tenant</body></html>",
-                    "text/html",
-                    "UTF-8",
-                    null,
-                )
-            }
+            s.onActivity { it.web.loadUrl("https://tenant.front.cbgpu.com/__native_test__") }
             await(s, "location.hostname", "\"tenant.front.cbgpu.com\"")
             assertEquals("\"undefined\"", evaluate(s, "typeof window.CBGPUNativeChannel"))
             assertEquals("\"undefined\"", evaluate(s, "typeof window.CBGPUNative"))
