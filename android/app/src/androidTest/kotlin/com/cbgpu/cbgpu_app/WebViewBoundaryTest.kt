@@ -159,12 +159,25 @@ class WebViewBoundaryTest {
                 "window.answer=null;window.CBGPUNative.getAppInfo().then(v=>window.answer=v);true",
             )
             await(s, "window.answer&&window.answer.platform", "\"android\"")
+            val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+            val scopePrefs = context.getSharedPreferences("cbgpu_widget_scope", 0)
+            val before = scopePrefs.getLong("generation", 0)
+            evaluate(s, "window.dispatchEvent(new Event('cbgpu-school-changed'));true")
+            val deadline = System.currentTimeMillis() + 10000
+            while (
+                scopePrefs.getLong("generation", 0) <= before &&
+                    System.currentTimeMillis() < deadline
+            ) Thread.sleep(50)
+            assertTrue(scopePrefs.getLong("generation", 0) > before)
+            val mainGeneration = scopePrefs.getLong("generation", 0)
+
             evaluate(
                 s,
-                "window.childReplies=0;var original=window.CBGPUNative._resolve;window.CBGPUNative._resolve=function(id,ok,value){if(id==='forged-child')window.childReplies++;return original(id,ok,value)};var frame=document.createElement('iframe');frame.srcdoc='<script>setTimeout(()=>{if(window.CBGPUNativeChannel)window.CBGPUNativeChannel.postMessage(JSON.stringify({callId:\"forged-child\",action:\"getAppInfo\",payload:{}}))},100)<\\/script>';document.body.appendChild(frame);true",
+                "window.childReplies=0;var original=window.CBGPUNative._resolve;window.CBGPUNative._resolve=function(id,ok,value){if(id==='forged-child')window.childReplies++;return original(id,ok,value)};var frame=document.createElement('iframe');frame.srcdoc='<script>setTimeout(()=>{if(window.CBGPUNativeChannel)window.CBGPUNativeChannel.postMessage(JSON.stringify({callId:\"forged-child\",action:\"invalidateSchoolWidgets\",payload:{}}))},100)<\\/script>';document.body.appendChild(frame);true",
             )
             Thread.sleep(500)
             assertEquals("0", evaluate(s, "window.childReplies"))
+            assertEquals(mainGeneration, scopePrefs.getLong("generation", 0))
             s.onActivity { it.web.loadUrl("https://tenant.front.cbgpu.com/__native_test__") }
             await(s, "location.hostname", "\"tenant.front.cbgpu.com\"")
             assertEquals("\"undefined\"", evaluate(s, "typeof window.CBGPUNativeChannel"))

@@ -406,6 +406,50 @@ class MainActivity : ComponentActivity() {
                 } catch (_: Exception) {
                     resolve(id, false, JSONObject().put("error", "Invalid navigation"), epoch)
                 }
+            "invalidateSchoolWidgets" -> {
+                io.execute {
+                    if (BuildConfig.DEBUG && intent.getBooleanExtra("cbgpu_test_mode", false))
+                        WidgetScopeCache.invalidate(this)
+                    else WidgetRefreshWorker.schoolChanged(this)
+                    resolve(id, true, JSONObject().put("ok", true), epoch)
+                }
+            }
+            "setTimetableSelection" -> {
+                io.execute {
+                    try {
+                        val owner =
+                            SessionVault(this).currentOwner()
+                                ?: throw IllegalStateException("앱에 로그인해주세요")
+                        require(p.getString("expected_user_id") == owner)
+                        var refresh = false
+                        val valid =
+                            SessionVault(this).commitForOwner(owner) {
+                                refresh =
+                                    WidgetScopeCache.saveSelection(
+                                        this,
+                                        WidgetTimetableSelection(
+                                            owner,
+                                            p.getString("school_id"),
+                                            p.getInt("grade"),
+                                            p.getInt("class_num"),
+                                        ),
+                                    )
+                            }
+                        if (!valid) throw IllegalStateException("로그인 상태를 확인해주세요")
+                        if (refresh) {
+                            WidgetRefreshWorker.redraw(this)
+                            if (
+                                !(BuildConfig.DEBUG &&
+                                    intent.getBooleanExtra("cbgpu_test_mode", false))
+                            )
+                                WidgetRefreshWorker.refresh(this, true)
+                        }
+                        resolve(id, true, JSONObject().put("ok", true), epoch)
+                    } catch (_: Exception) {
+                        resolve(id, false, JSONObject().put("error", "시간표 위젯 설정을 저장하지 못했어요"), epoch)
+                    }
+                }
+            }
             "getAppInfo" -> {
                 @Suppress("DEPRECATION") val info = packageManager.getPackageInfo(packageName, 0)
                 @Suppress("DEPRECATION")

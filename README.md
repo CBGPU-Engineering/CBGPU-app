@@ -6,7 +6,7 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-D22128)](LICENSE)
 
 The native Android client for **CBGPU**, built with Kotlin and a Rust JNI core.
-Version **1.0.12 / build 13** retains the existing application ID
+Version **1.0.13 / build 14** retains the existing application ID
 `com.cbgpu.cbgpu_app`, signing identity and mobile website design. The Android
 build has no Flutter Gradle plugin, Flutter engine or Dart runtime.
 
@@ -100,3 +100,27 @@ both the unexpired encrypted owner and the current WebView owner; foreign,
 ownerless and signed-out messages are ignored. Token changes unregister the old
 owner, retire the Firebase installation token, and register a fresh token; a
 retirement failure never reassigns the old token to another account.
+
+## School-aware widget candidate (1.0.13 / build 14)
+
+This source version is held for paired server verification; the current public
+brand release is 1.0.12 / build 13. The candidate authenticates widget requests,
+uses only the server-selected active verified school, labels timetable widgets
+with that school and invalidates old account/school cache leases. Other-school
+classes come from a successful in-app timetable selection; CBsh student widgets
+retain the verified student-number default. Native preferences never grant access.
+
+Before distributing this version, deploy and verify the additive self-only
+`cbgpu_self_session_status()` oracle, scoped school/timetable endpoints and the
+thin legacy timetable Edge proxy. Missing RPCs, unknown school modes, mismatched
+school IDs and suspended/expired membership fail closed. The scoped meal widget
+also requires the central meal response to include the verified `school_id`;
+an older unscoped response is rejected, rather than shown under another school's
+label. Other-school GPU/fabrication services remain unavailable until their real
+school resources are connected and authorized.
+
+Older APKs cannot provide authenticated multi-school timetable context. While
+school mode is disabled, the compatibility proxy can still return public CBsh
+subjects with teacher fields redacted. Turning school mode on requires users to
+update for scoped widgets. No operating migration, Edge restart or APK publication
+is performed by these source changes.

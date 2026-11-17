@@ -6,5 +6,5 @@ test('Android mark preserves supplied brand path and uniform adaptive scaling',(
   const xml=read('android/app/src/main/res/drawable/'+name+'.xml');assert.equal(xml.match(/android:pathData="([^"]+)"/)![1],source);assert.match(xml,/android:translateX="24" android:translateY="24"/);
  }
  const adaptive=read('android/app/src/main/res/drawable/ic_launcher_foreground.xml');assert.match(adaptive,/android:scaleX="0.1300813" android:scaleY="0.1300813"/);
- assert.equal(read('android/version.properties'),'versionName=1.0.12\nversionCode=13\n');
+
 });

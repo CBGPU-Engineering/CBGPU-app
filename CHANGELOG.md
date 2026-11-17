@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.13
+
+- Authenticate timetable widgets and bind their labels, class preferences and caches to the server-selected verified school.
+- Clear pending widget results across school/account changes and retain the official brand.
+
 ## 1.0.12
 
 - Apply the supplied official CBGPU brand artwork to adaptive/legacy launcher icons, light/dark splash screens, native notifications and widgets without stretching the mark.

@@ -161,6 +161,32 @@ pub fn bridge_message(raw: &str) -> bool {
         return false;
     }
     match v["action"].as_str() {
+        Some("invalidateSchoolWidgets") => v["payload"].as_object().is_some_and(|p| p.is_empty()),
+        Some("setTimetableSelection") => {
+            let p = &v["payload"];
+            p.as_object().is_some_and(|p| p.len() == 4)
+                && p["expected_user_id"].as_str().is_some_and(|s| {
+                    s.len() == 36
+                        && s.bytes().enumerate().all(|(i, b)| {
+                            if [8, 13, 18, 23].contains(&i) {
+                                b == b'-'
+                            } else {
+                                b.is_ascii_hexdigit()
+                            }
+                        })
+                })
+                && p["school_id"].as_str().is_some_and(|s| {
+                    !s.is_empty()
+                        && s.len() <= 100
+                        && s.bytes()
+                            .all(|c| c.is_ascii_alphanumeric() || b"-_".contains(&c))
+                })
+                && p["grade"].as_u64().is_some_and(|n| (1..=12).contains(&n))
+                && p["class_num"]
+                    .as_u64()
+                    .is_some_and(|n| (1..=100).contains(&n))
+        }
+
         Some("setNavigation") => {
             v["payload"]["visible"] == false
                 || v["payload"]["tabs"].as_array().is_some_and(|tabs| {
@@ -306,5 +332,37 @@ mod document_tests {
         for path in ["/", "/ai", "/auth/callback", "/study?native=1"] {
             assert!(bridge_document(&format!("https://app.cbgpu.com{path}")))
         }
+    }
+}
+
+#[cfg(test)]
+mod school_widget_tests {
+    use super::*;
+    #[test]
+    fn school_selection_requires_bounded_owner_bound_payload() {
+        let mut message = serde_json::json!({"callId":"school-1","action":"setTimetableSelection","payload":{"school_id":"cbsh","expected_user_id":"12345678-1234-1234-1234-123456789abc","grade":2,"class_num":3}});
+        assert!(bridge_message(&message.to_string()));
+        for (key, value) in [
+            ("school_id", serde_json::json!("../../private")),
+            ("grade", serde_json::json!(13)),
+            ("class_num", serde_json::json!(0)),
+            ("expected_user_id", serde_json::json!("other")),
+        ] {
+            let original = message["payload"][key].clone();
+            message["payload"][key] = value;
+            assert!(!bridge_message(&message.to_string()), "{key}");
+            message["payload"][key] = original;
+        }
+        message["payload"]["token"] = serde_json::json!("untrusted");
+        assert!(!bridge_message(&message.to_string()));
+    }
+    #[test]
+    fn school_invalidation_accepts_no_remote_parameters() {
+        assert!(bridge_message(
+            r#"{"callId":"x","action":"invalidateSchoolWidgets","payload":{}}"#
+        ));
+        assert!(!bridge_message(
+            r#"{"callId":"x","action":"invalidateSchoolWidgets","payload":{"school_id":"other"}}"#
+        ));
     }
 }

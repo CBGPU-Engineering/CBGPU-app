@@ -13,6 +13,8 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import org.json.JSONObject
 
+class NativeHttpFailure(val status: Int) : IllegalStateException("요청을 완료하지 못했습니다 ($status)")
+
 object NativeHttp {
     const val BASE = "https://cbgpu.com/backend"
     // Public project key; authorization is enforced by Auth and RLS, never this value.
@@ -40,7 +42,7 @@ object NativeHttp {
                 c.setRequestProperty("Prefer", "resolution=merge-duplicates")
                 c.outputStream.use { it.write(body.toString().toByteArray()) }
             }
-            check(c.responseCode in 200..299) { "요청을 완료하지 못했습니다 (${c.responseCode})" }
+            if (c.responseCode !in 200..299) throw NativeHttpFailure(c.responseCode)
             return c.inputStream.use {
                 val out = java.io.ByteArrayOutputStream()
                 val buffer = ByteArray(8192)
