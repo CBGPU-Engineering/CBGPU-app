@@ -87,9 +87,9 @@ Android emulator. A local signed build and a compiled instrumentation APK do not
 prove physical-device notification delivery, Doze behavior or every manufacturer's
 WebView behavior. Those require device validation before broad rollout.
 
-Legacy Dart/iOS/desktop source remains for reference and the previous release;
-it is not used by the standalone Android build. This change does not certify a
-native iOS replacement. See [CONTRIBUTING.md](CONTRIBUTING.md) and
+The unused Flutter/Dart and unreleased desktop/iOS scaffolding has been retired
+from the current tree; previous source and released Android APKs remain in Git
+history and Releases. This repository does not provide a native iOS replacement. See [CONTRIBUTING.md](CONTRIBUTING.md) and
 [SECURITY.md](SECURITY.md). Original code is [Apache-2.0](LICENSE); bundled
 Pretendard retains its OFL license and dependencies retain their licenses.
 

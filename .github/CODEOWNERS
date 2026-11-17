@@ -5,7 +5,10 @@
 *.js @lmwmason
 *.ts @lmwmason
 *.tsx @lmwmason
-*.dart @lmwmason
+*.kt @lmwmason
+*.kts @lmwmason
+*.rs @lmwmason
+*.mts @lmwmason
 *.go @lmwmason
 *.sql @lmwmason
 *.sh @lmwmason

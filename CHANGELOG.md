@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.11
+
+- Replace the Android Flutter engine with a standalone Kotlin shell and Rust JNI policy core while retaining the current CBGPU design.
+- Preserve package identity, existing signing certificate, WebView cookies, widget IDs and native session migration.
+- Bind native notifications, alarms and private widgets to the current signed-in account.
+- Require trusted main-frame origins for native bridge calls and retain HttpOnly shared-session rotation.
+- Add real Android emulator coverage for WebView/JNI, cookie isolation, Keystore migration and legacy push suppression.
+
 ## 1.0.10
 
 - Add capability-negotiated native workspace tabs with the website’s existing labels, Lucide geometry, Pretendard typeface and theme colors.

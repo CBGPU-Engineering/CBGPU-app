@@ -11,8 +11,13 @@ system, use [CBGPU-platform](https://github.com/CBGPU-Engineering/CBGPU-platform
    platform (or backend, for LaTeX) through a separate reviewed PR.
 
 ```bash
-flutter pub get
-flutter test test/app_navigation_test.dart test/eduset_login_policy_test.dart
+npm ci
+npm run check
+npm test
+cargo test --manifest-path native-core/Cargo.toml
+./android/gradlew -p android assembleDebug testDebugUnitTest
+# With an Android emulator or test device:
+./android/gradlew -p android connectedDebugAndroidTest
 ```
 
 Write project documentation and PR summaries in English. Existing Korean product

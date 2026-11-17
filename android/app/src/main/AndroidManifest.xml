@@ -1,13 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Only src/debug/AndroidManifest.xml had this before, so every network
-         call (Supabase, the Edge Functions backend) would have silently
-         failed in a release build despite working fine under `flutter run`. -->
     <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- Runtime-granted on Android 13+ by FirebaseMessaging.requestPermission()
-         and AlarmService.requestPermission(). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <!-- Lets the web-app-driven alarms in core/alarm_service.dart fire at the
-         exact time the user picked, not "sometime nearby" under Doze. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
@@ -28,20 +21,11 @@
             android:windowSoftInputMode="adjustResize">
             <intent-filter android:autoVerify="true"><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="https" android:host="app.cbgpu.com"/></intent-filter>
             <intent-filter><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="cbgpu" android:host="open"/></intent-filter>
-            <!-- Specifies an Android theme to apply to this Activity as soon as
-                 the Android process has started. This theme is visible to the user
-                 while the Flutter UI initializes. After that, this theme continues
-                 to determine the Window background behind the Flutter UI. -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <!-- Don't delete the meta-data below.
-             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
-
-        <!-- Shown once per widget placement (android:configure in each
-             res/xml/*_widget_info.xml) — see WidgetConfigureActivity. -->
         <activity
             android:name=".widgets.WidgetConfigureActivity"
             android:exported="true"
@@ -50,10 +34,6 @@
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
-
-        <!-- Home screen widgets — data pushed from lib/core/home_widgets.dart via
-             the home_widget plugin (foreground refresh + a periodic WorkManager
-             task); see widgets/BaseTextWidgetProvider.kt for the shared render code. -->
         <receiver android:name=".widgets.GpuStatusWidgetProvider" android:exported="false" android:label="GPU 상태">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -90,11 +70,6 @@
         <receiver android:name=".BootReceiver" android:exported="false"><intent-filter><action android:name="android.intent.action.BOOT_COMPLETED"/><action android:name="android.intent.action.MY_PACKAGE_REPLACED"/></intent-filter></receiver>
         <service android:name=".NativeMessagingService" android:exported="false"><intent-filter><action android:name="com.google.firebase.MESSAGING_EVENT"/></intent-filter></service>
     </application>
-    <!-- Required to query activities that can process text, see:
-         https://developer.android.com/training/package-visibility and
-         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
-
-         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
