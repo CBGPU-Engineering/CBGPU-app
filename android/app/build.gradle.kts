@@ -65,12 +65,12 @@ android {
 kotlin { compilerOptions { jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17 } }
 
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation("androidx.activity:activity-ktx:1.11.0")
-    implementation("androidx.fragment:fragment-ktx:1.8.9")
-    implementation("androidx.core:core-ktx:1.17.0")
+    implementation("androidx.fragment:fragment-ktx:1.9.1")
+    implementation("androidx.core:core-ktx:1.19.1")
     implementation("androidx.webkit:webkit:1.14.0")
-    implementation("androidx.work:work-runtime-ktx:2.10.1")
+    implementation("androidx.work:work-runtime-ktx:2.12.0")
     implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
     implementation("com.google.firebase:firebase-messaging")
     testImplementation("junit:junit:4.13.2")

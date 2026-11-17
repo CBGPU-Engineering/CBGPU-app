@@ -7,8 +7,8 @@ pluginManagement {
 }
 
 plugins {
-    id("com.android.application") version "9.0.1" apply false
-    id("com.google.gms.google-services") version "4.4.4" apply false
+    id("com.android.application") version "9.5.1" apply false
+    id("com.google.gms.google-services") version "4.6.0" apply false
 }
 
 dependencyResolutionManagement {
