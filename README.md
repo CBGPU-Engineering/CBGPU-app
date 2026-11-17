@@ -6,7 +6,7 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-D22128)](LICENSE)
 
 The native Android client for **CBGPU**, built with Kotlin and a Rust JNI core.
-Version **1.0.11 / build 12** retains the existing application ID
+Version **1.0.12 / build 13** retains the existing application ID
 `com.cbgpu.cbgpu_app`, signing identity and mobile website design. The Android
 build has no Flutter Gradle plugin, Flutter engine or Dart runtime.
 

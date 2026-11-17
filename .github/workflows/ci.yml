@@ -55,7 +55,10 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
-          script: ./android/gradlew -p android connectedDebugAndroidTest
+          script: |
+            ./android/gradlew -p android connectedDebugAndroidTest
+            mkdir -p android/app/build/reports/brand
+            adb exec-out run-as com.cbgpu.cbgpu_app cat files/brand-foreground.png > android/app/build/reports/brand/foreground.png
       - name: Upload emulator test reports
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -63,6 +66,7 @@ jobs:
           name: native-android-reports-${{ github.sha }}-${{ github.run_attempt }}
           path: |
             android/app/build/reports/androidTests/
+            android/app/build/reports/brand/
             android/app/build/outputs/androidTest-results/
           if-no-files-found: warn
           retention-days: 14

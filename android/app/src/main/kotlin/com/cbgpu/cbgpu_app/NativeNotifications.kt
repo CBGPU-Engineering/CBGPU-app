@@ -80,7 +80,7 @@ object NativeNotifications {
             )
         val n =
             NotificationCompat.Builder(c, channel)
-                .setSmallIcon(R.mipmap.ic_launcher)
+                .setSmallIcon(R.drawable.ic_notification_cbgpu)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body))

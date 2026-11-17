@@ -48,6 +48,36 @@ class WebViewBoundaryTest {
     }
 
     @Test
+    fun officialAdaptiveForegroundIsTransparentAndInsideSafeZone() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val drawable =
+            androidx.core.content.ContextCompat.getDrawable(
+                context,
+                R.drawable.ic_launcher_foreground,
+            )!!
+        val bitmap =
+            android.graphics.Bitmap.createBitmap(108, 108, android.graphics.Bitmap.Config.ARGB_8888)
+        drawable.setBounds(0, 0, 108, 108)
+        drawable.draw(android.graphics.Canvas(bitmap))
+        var pixels = 0
+        for (y in 0 until 108) for (x in 0 until 108) {
+            if (android.graphics.Color.alpha(bitmap.getPixel(x, y)) > 0) {
+                assertTrue(
+                    "Brand artwork must stay inside adaptive safe zone",
+                    x in 18..90 && y in 18..90,
+                )
+                pixels++
+            }
+        }
+        assertTrue("Actual supplied symbol must be rendered", pixels > 500)
+        assertEquals(0, android.graphics.Color.alpha(bitmap.getPixel(0, 0)))
+        context.openFileOutput("brand-foreground.png", android.content.Context.MODE_PRIVATE).use {
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+        }
+        bitmap.recycle()
+    }
+
+    @Test
     fun jniPolicyRejectsUntrustedAndKeepsDesktopLinksMobile() {
         assertTrue(NativeCore.bridgeAllowed("https://app.cbgpu.com/ai"))
         for (url in

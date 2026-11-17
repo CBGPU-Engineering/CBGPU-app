@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.12
+
+- Apply the supplied official CBGPU brand artwork to adaptive/legacy launcher icons, light/dark splash screens, native notifications and widgets without stretching the mark.
+- Preserve the existing signing certificate, login storage and application ID.
+
 ## 1.0.11
 
 - Replace the Android Flutter engine with a standalone Kotlin shell and Rust JNI policy core while retaining the current CBGPU design.

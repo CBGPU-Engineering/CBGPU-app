@@ -38,6 +38,7 @@
                 android:letterSpacing="0.05"
                 android:singleLine="true"
                 tools:text="GPU 상태" />
+        <ImageView android:id="@+id/widget_brand" android:layout_width="20dp" android:layout_height="16.504065dp" android:layout_marginStart="8dp" android:src="@drawable/cbgpu_brand_symbol" android:contentDescription="CBGPU" android:scaleType="fitCenter"/>
         </LinearLayout>
 
         <TextView

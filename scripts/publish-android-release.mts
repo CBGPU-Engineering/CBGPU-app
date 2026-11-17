@@ -29,7 +29,7 @@ export async function main(){
  if(!process.argv.includes('--publish')){console.log(JSON.stringify({verified:true,published:false,version,buildNumber:build,sha256:nextHash,certificateSha256:next.certificateSha256}));return;}
  const backup=path.join(os.homedir(),'.local/share/cbgpu-android-rollback');await fs.mkdir(backup,{recursive:true,mode:0o700});const saved=path.join(backup,oldHash+'.apk');try{await fs.copyFile(old,saved,constants.COPYFILE_EXCL);await fs.chmod(saved,0o600)}catch(error){if((error as NodeJS.ErrnoException).code!=='EEXIST')throw error;}if(await digest(saved)!==oldHash)throw Error('Rollback APK verification failed.');
  await atomic(apk,path.join(destination,'cbgpu-'+version+'.apk'));await atomic(apk,old);
- const data={version,buildNumber:build,sha256:nextHash,notes:'Kotlin·Rust 기반 Android 앱입니다. 기존 계정과 앱 데이터는 유지됩니다.'};
+ const data={version,buildNumber:build,sha256:nextHash,notes:'공식 CBGPU 브랜드와 Kotlin·Rust 기반 Android 앱입니다. 기존 계정과 앱 데이터는 유지됩니다.'};
  const stage=path.join(destination,'.manifest-'+crypto.randomBytes(12).toString('hex'));try{await fs.writeFile(stage,JSON.stringify(data)+'\n',{mode:0o644,flag:'wx'});const fd=await fs.open(stage,'r');try{await fd.sync()}finally{await fd.close()}await fs.rename(stage,manifestPath)}finally{await fs.unlink(stage).catch(()=>{})}
  console.log('Published verified Android '+version+' (build '+build+'); previous APK preserved for rollback.');
  }finally{if(publishing)await fs.rmdir(lock);}
